@@ -49,3 +49,15 @@ class Triage:
 
         get_fls_file.close()
         triage_file.close()
+
+    def get_plist_details(self):
+        get_plist_inode = open("./triage_result.txt", 'w')
+
+        while True:
+            each_inode = get_plist_inode.readline()
+            if not each_inode:
+                break
+            istat_cmd = "./sleuthkit-4.5.0-win32/bin/istat.exe"
+            plist_details = subprocess.check_output(istat_cmd, universal_newlines=True)
+
+        get_plist_inode.close()
