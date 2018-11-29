@@ -4,6 +4,22 @@ import datetime
 import shutil
 import argparse
 
+import ccl_bplist
+import dicttoxml
+
+def convert_bplist(fullname, extract_dir):
+    file = open(fullname, "rb")
+    try:
+        plist = ccl_bplist.load(file)
+        print(plist.items())
+        xmlfile = dicttoxml.dicttoxml(plist.items(), attr_type=False)
+        print(extract_dir + fullname)
+        with open(extract_dir + fullname, 'wb') as write_file:
+            write_file.write(xmlfile)
+
+    except:
+        print("This is not binary plist")
+
 def search(dirname, extract_dir, db_name):
     try:
         list_filename = os.listdir(dirname)
@@ -20,10 +36,10 @@ def search(dirname, extract_dir, db_name):
                     get_plist_metadata(full_filename, extract_dir, db_name)
                     try:
                         os.makedirs(extract_dir + os.path.dirname(full_filename))
-                    except:
-                        continue
-                        
-                    shutil.copyfile(full_filename, extract_dir + full_filename)
+                        shutil.copyfile(full_filename, extract_dir + full_filename)
+                    except OSError as e:
+                        #convert_bplist(full_filename, extract_dir)
+                        shutil.copyfile(full_filename, extract_dir + full_filename)
 
     except OSError as e:
         pass
