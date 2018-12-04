@@ -4,22 +4,6 @@ import datetime
 import shutil
 import argparse
 
-import ccl_bplist
-import dicttoxml
-
-def convert_bplist(fullname, extract_dir):
-    file = open(fullname, "rb")
-    try:
-        plist = ccl_bplist.load(file)
-        print(plist.items())
-        xmlfile = dicttoxml.dicttoxml(plist.items(), attr_type=False)
-        print(extract_dir + fullname)
-        with open(extract_dir + fullname, 'wb') as write_file:
-            write_file.write(xmlfile)
-
-    except:
-        print("This is not binary plist")
-
 def search(dirname, extract_dir, db_name):
     try:
         list_filename = os.listdir(dirname)
@@ -49,13 +33,19 @@ def get_plist_metadata(full_filename, extract_dir, db_name):
         stat = os.stat(full_filename)
         conn = sqlite3.connect(extract_dir + "/" + db_name)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO plist_metadata VALUES (?, ?, ?, ?, ?)",
+
+        file = open(full_filename, "rb")
+
+        plist_contents = file.read()
+        cursor.execute("INSERT INTO plist_metadata VALUES (?, ?, ?, ?, ?, ?)",
                        (full_filename, stat.st_birthtime, stat.st_atime,
-                        stat.st_mtime, stat.st_ctime))
+                        stat.st_mtime, stat.st_ctime, plist_contents))
+        file.close()
         conn.commit()
         cursor.close()
         conn.close()
-    except:
+    except sqlite3.Error as err:
+        print(err.args)
         pass
 
 def initialize_db(extract_dir_name, db_name):
@@ -65,7 +55,7 @@ def initialize_db(extract_dir_name, db_name):
 
         cursor.execute("CREATE TABLE IF NOT EXISTS plist_metadata "
                        "(path TEXT, create_date INTEGER, access_date INTEGER, modify_date INTEGER, "
-                       "entry_modify INTEGER)")
+                       "entry_modify INTEGER, contents TEXT)")
         cursor.close()
         conn.close()
     except sqlite3.Error as e:
